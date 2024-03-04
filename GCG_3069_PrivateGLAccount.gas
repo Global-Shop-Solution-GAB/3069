@@ -1,0 +1,396 @@
+Program.Sub.ScreenSU.Start
+gui.frmPrivateGL..create
+gui.frmPrivateGL..caption("Private GL Account")
+gui.frmPrivateGL..size(7065,9240)
+gui.frmPrivateGL..minx(0)
+gui.frmPrivateGL..miny(0)
+gui.frmPrivateGL..position(0,0)
+gui.frmPrivateGL..event(unload,frmprivategl_unload)
+gui.frmPrivateGL..alwaysontop(False)
+gui.frmPrivateGL..fontname("Arial")
+gui.frmPrivateGL..fontsize(8)
+gui.frmPrivateGL..forecolor(0)
+gui.frmPrivateGL..fontstyle(,,,,)
+gui.frmPrivateGL..BackColor(-2147483633)
+gui.frmPrivateGL..controlbox(True)
+gui.frmPrivateGL..maxbutton(False)
+gui.frmPrivateGL..minbutton(False)
+gui.frmPrivateGL..mousepointer(0)
+gui.frmPrivateGL..moveable(True)
+gui.frmPrivateGL..sizeable(False)
+gui.frmPrivateGL..ShowInTaskBar(True)
+gui.frmPrivateGL..titlebar(True)
+gui.frmPrivateGL.lbl1.create(label,"Account",True,1935,255,1,200,290,True,0,Arial,8,-2147483633,0)
+gui.frmPrivateGL.lbl1.defaultvalue("")
+gui.frmPrivateGL.lbl1.controlgroup(0)
+gui.frmPrivateGL.lbl3.create(label,"Describtion",True,1935,255,1,1950,290,True,0,Arial,8,-2147483633,0)
+gui.frmPrivateGL.lbl3.defaultvalue("")
+gui.frmPrivateGL.lbl3.controlgroup(0)
+gui.frmPrivateGL.txtAccount.create(textbox,"",True,1215,300,0,185,500,True,0,Arial,8,-2147483643,1)
+gui.frmPrivateGL.txtAccount.defaultvalue("")
+gui.frmPrivateGL.txtAccount.controlgroup(0)
+gui.frmPrivateGL.txtdesc.create(textbox,"",True,3810,300,0,1950,500,True,0,Arial,8,-2147483643,1)
+gui.frmPrivateGL.txtdesc.defaultvalue("")
+gui.frmPrivateGL.txtdesc.controlgroup(0)
+gui.frmPrivateGL.cmdBrowse.create(button)
+gui.frmPrivateGL.cmdBrowse.caption("^")
+gui.frmPrivateGL.cmdBrowse.visible(True)
+gui.frmPrivateGL.cmdBrowse.size(405,270)
+gui.frmPrivateGL.cmdBrowse.zorder(0)
+gui.frmPrivateGL.cmdBrowse.position(1445,490)
+gui.frmPrivateGL.cmdBrowse.enabled(True)
+gui.frmPrivateGL.cmdBrowse.fontname("Arial")
+gui.frmPrivateGL.cmdBrowse.fontsize(8)
+gui.frmPrivateGL.cmdBrowse.event(click,cmdbrowse_click)
+gui.frmPrivateGL.cmdBrowse.defaultvalue("")
+gui.frmPrivateGL.cmdBrowse.controlgroup(0)
+gui.frmPrivateGL.cmdAdd.create(button)
+gui.frmPrivateGL.cmdAdd.caption("&Add")
+gui.frmPrivateGL.cmdAdd.visible(True)
+gui.frmPrivateGL.cmdAdd.size(855,375)
+gui.frmPrivateGL.cmdAdd.zorder(0)
+gui.frmPrivateGL.cmdAdd.position(5835,460)
+gui.frmPrivateGL.cmdAdd.enabled(True)
+gui.frmPrivateGL.cmdAdd.fontname("Arial")
+gui.frmPrivateGL.cmdAdd.fontsize(8)
+gui.frmPrivateGL.cmdAdd.event(click,cmdadd_click)
+gui.frmPrivateGL.cmdAdd.defaultvalue("")
+gui.frmPrivateGL.cmdAdd.controlgroup(0)
+gui.frmPrivateGL.gsAccount.create(gsflexgrid)
+gui.frmPrivateGL.gsAccount.FixedRows(0)
+gui.frmPrivateGL.gsAccount.FixedCols(0)
+gui.frmPrivateGL.gsAccount.visible(True)
+gui.frmPrivateGL.gsAccount.size(5595,7635)
+gui.frmPrivateGL.gsAccount.zorder(0)
+gui.frmPrivateGL.gsAccount.position(145,900)
+gui.frmPrivateGL.gsAccount.enabled(True)
+gui.frmPrivateGL.gsAccount.event(commandclick,gsaccount_deleteclick)
+
+
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Variable.UDT.uGLAccount.Define("Account",String,GL_Account)
+Variable.UDT.uGLAccount.Define("Desc",String,Descr)
+Variable.uGlobal.uGLAccount.Declare("uGLAccount")
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+' RAN 11/28/2015
+' Project Name: - Quote 7151-1  PRIVATE GL account
+' American Block Mfg
+
+V.Local.sSql.Declare(String)
+V.Local.sRet.Declare(String)
+V.Local.bretval.Declare(Boolean)
+V.Local.sUser.Declare(String)
+
+
+F.ODBC.Connection!con.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass,2000)
+
+F.Intrinsic.Control.If(V.Caller.Hook,=,"31000")
+'Browser Security GL Account
+	Function.Global.Security.GetGroupMembers("GLACCESS",V.Caller.CompanyCode,V.Local.sRet)
+	V.Local.sUser.Set(V.Caller.User)
+	F.Intrinsic.String.IsInString(V.Local.sRet,V.Local.sUser.trim,True,V.Local.bretval)
+'no match
+	F.Intrinsic.Control.if(V.Local.bretval,=,False)
+		F.Intrinsic.Control.CallSub(Nonbrowser)
+'Override default browser
+		Variable.Passed.777777.Set(1)
+		F.Intrinsic.Control.CallSub(Frmprivategl_unload)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Else
+'Maintenance Process
+	F.Intrinsic.Control.CallSub(Buildstyle)
+	'Gui.frmPrivateGL.gsAccount.Visible(false)
+	V.Local.sSql.Set("select GL_Account,Descr from v_GL_Master join GCG_3069_PrivateGL on rtrim(GL_Account) = PrivateGL_Account")
+	F.ODBC.Connection!con.OpenLocalRecordsetRO("rst",V.Local.sSql)
+	F.Intrinsic.Control.if(V.ODBC.con!rst.EOF,=,False)
+		F.Intrinsic.Variable.LoadUDTFromRecordset("CON","RST","V.uGlobal.uGLAccount",False)
+		Gui.frmPrivateGL.gsAccount.LoadFromUDT("V.v.uGlobal.uGLAccount","Account::0*!*Desc::1",1)
+	F.Intrinsic.Control.Else
+		Gui.frmPrivateGL.gsAccount.Rows(1)
+	F.Intrinsic.Control.EndIf
+	'	F.Intrinsic.Control.DoUntil(V.ODBC.con!rst.EOF,=,True)
+	'		Gui.frmPrivateGL.gsAccount.Rows(V.Local.i)
+	'		Gui.frmPrivateGL.gsAccount.TextMatrix(0,V.Local.j,V.ODBC.con!rst.FieldValtrim!GL_Account)
+	'		Gui.frmPrivateGL.gsAccount.TextMatrix(1,V.Local.j,V.ODBC.con!rst.FieldValtrim!Descr)
+	'
+	'		Gui.frmPrivateGL.gsAccount.ApplyStyle(V.Local.j,1)
+	'
+	'		V.Local.j.Set(V.Local.i)
+	'		F.Intrinsic.Math.Add(V.Local.i,1,V.Local.i)
+	'		F.ODBC.con!rst.MoveNext
+	'	F.Intrinsic.Control.Loop
+	F.ODBC.con!rst.Close
+	'Gui.frmPrivateGL.gsAccount.Visible(true)
+	Gui.frmPrivateGL..Show
+F.Intrinsic.Control.endif
+
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3069_PrivateGLAccount.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Main.End
+
+program.sub.frmprivategl_unload.start
+F.Intrinsic.Control.SetErrorHandler("frmprivategl_unload_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+
+
+F.ODBC.Connection!con.Close
+F.Intrinsic.Control.End
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("frmprivategl_unload_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3069_PrivateGLAccount.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+program.sub.frmprivategl_unload.end
+
+program.sub.cmdadd_click.start
+F.Intrinsic.Control.SetErrorHandler("cmdadd_click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+V.Local.sSql.Declare(String)
+V.Local.sRet.Declare(String)
+V.Local.i.Declare(Long)
+V.Local.j.Declare(Long)
+V.local.sReturn.Declare(String)
+
+
+
+V.Local.sRet.Set(V.Screen.frmPrivateGL!txtAccount.Text)
+
+F.Intrinsic.Control.If(V.Local.sRet.Trim,<>,"")
+	'Duplicate check
+	F.Intrinsic.Variable.UDTSeek(V.uglobal.uGLAccount!Account,V.Local.sRet.Trim,2,V.local.sReturn)
+
+	F.Intrinsic.Control.If(V.local.sReturn.trim,=,"")
+		F.Intrinsic.String.Build("Insert Into GCG_3069_PrivateGL(PrivateGL_Account) values('{0}')",V.Local.sRet.trim,V.Local.sSql)
+		F.ODBC.Connection!con.Execute(V.Local.ssql)
+
+
+		V.Local.j.Set(V.Screen.frmPrivateGL!gsAccount.Rows)
+		V.Local.i.Set(V.Screen.frmPrivateGL!gsAccount.Rows)
+
+		F.Intrinsic.Math.Add(V.Local.i,1,V.Local.i)
+		Gui.frmPrivateGL.gsAccount.rows(V.Local.i)
+
+		Gui.frmPrivateGL.gsAccount.TextMatrix(0,V.Local.j,V.Local.sRet)
+		Gui.frmPrivateGL.gsAccount.TextMatrix(1,V.Local.j,V.Screen.frmPrivateGL!txtdesc.Text)
+		Gui.frmPrivateGL.gsAccount.ApplyStyle(V.Local.j,1)
+
+	'	Gui.FormName.GSFlexgrid.ExportToUDT(UDT,ColumnOrder,LoadElements,StartRow,EndRow,Preserveboolean)
+
+		'Add to UDT
+		V.uglobal.uGLAccount(V.uglobal.uGLAccount.UBound)!Account.Set(V.Local.sRet.trim)
+		V.uglobal.uGLAccount(V.uglobal.uGLAccount.UBound)!Desc.Set(V.Screen.frmPrivateGL!txtdesc.Text)
+	F.Intrinsic.Control.EndIf
+
+	Gui.frmPrivateGL.txtAccount.Text("")
+	Gui.frmPrivateGL.txtdesc.Text("")
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdadd_click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3069_PrivateGLAccount.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+program.sub.cmdadd_click.end
+
+program.sub.cmdbrowse_click.start
+F.Intrinsic.Control.SetErrorHandler("cmdbrowse_click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+
+V.Local.sSql.Declare(String)
+V.Local.sTitles.Declare(String)
+V.Local.sWidths.Declare(String)
+V.Local.sRet.Declare(String)
+'
+
+Function.Intrinsic.UI.InvokeWaitDialog("Processing ...")
+
+'GL Browser
+F.Intrinsic.UI.SetBrowserHotTypeAhead(True)
+F.Intrinsic.UI.Browser(6000,"",V.Local.sRet)
+
+F.Intrinsic.Control.If(V.Local.sRet,<>,"***CANCEL***")
+	F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+	Gui.frmPrivateGL.txtAccount.text(V.Local.sRet(0))
+	Gui.frmPrivateGL.txtdesc.Text(V.Local.sRet(1))
+F.Intrinsic.Control.EndIf
+
+Function.Intrinsic.UI.CloseWaitDialog
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdbrowse_click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3069_PrivateGLAccount.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+program.sub.cmdbrowse_click.end
+
+program.sub.gsaccount_deleteclick.start
+F.Intrinsic.Control.SetErrorHandler("gsaccount_deleteclick_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+V.Local.sSql.Declare(String)
+V.Local.sRet.Declare(String)
+V.Local.sReturn.Declare(String)
+
+
+Gui.frmPrivateGL.gsAccount.GetTextMatrix(0,V.Screen.frmPrivateGL!gsAccount.Row,V.Local.sRet)
+
+
+F.Intrinsic.String.Build("Delete from GCG_3069_PrivateGL where PrivateGL_Account = '{0}'",V.Local.sRet.Trim,V.Local.Ssql)
+F.ODBC.Connection!con.Execute(V.Local.Ssql)
+
+'Delete from UDT
+Gui.frmPrivateGL.gsAccount.RowHeight(V.Screen.frmPrivateGL!gsAccount.Row,0)
+F.Intrinsic.Variable.UDTSeek(V.uglobal.uGLAccount!Account,V.Local.sRet.Trim,2,V.Local.sReturn)
+F.Intrinsic.Variable.UDTFlagOrdinal(V.uGlobal.uGLAccount,True,V.Local.sReturn.Trim)
+F.Intrinsic.Variable.UDTDeleteFlagged(V.uGlobal.uGLAccount)
+
+
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("gsaccount_deleteclick_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3069_PrivateGLAccount.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+program.sub.gsaccount_deleteclick.end
+
+Program.Sub.buildstyle.Start
+F.Intrinsic.Control.SetErrorHandler("buildstyle_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+
+Gui.frmPrivateGL.gsAccount.Cols(3)
+Gui.frmPrivateGL.gsAccount.Rows(2)
+Gui.frmPrivateGL.gsAccount.FixedCols(0)
+Gui.frmPrivateGL.gsAccount.FixedRows(1)
+
+
+Gui.frmPrivateGL.gsAccount.TextMatrix(0,0,"Account No")
+
+Gui.frmPrivateGL.gsAccount.ColWidth(0,800)
+Gui.frmPrivateGL.gsAccount.BuildStyle(1,0,"type","locked",True)
+Gui.frmPrivateGL.gsAccount.BuildStyle(1,0,"fontstyle","bold",True)
+Gui.frmPrivateGL.gsAccount.BuildStyle(1,0,"Format","alignment",1)
+
+
+Gui.frmPrivateGL.gsAccount.TextMatrix(1,0,"Account Name")
+Gui.frmPrivateGL.gsAccount.ColWidth(1,3550)
+Gui.frmPrivateGL.gsAccount.BuildStyle(1,1,"type","locked",True)
+Gui.frmPrivateGL.gsAccount.BuildStyle(1,1,"fontstyle","bold",True)
+Gui.frmPrivateGL.gsAccount.BuildStyle(1,1,"Format","alignment",1)
+
+
+Gui.frmPrivateGL.gsAccount.TextMatrix(2,0,"Create PO")
+Gui.frmPrivateGL.gsAccount.ColWidth(2,1200)
+Gui.frmPrivateGL.gsAccount.BuildStyle(1,2,"fontstyle","bold",True)
+Gui.frmPrivateGL.gsAccount.BuildStyle(1,2,"type","command","Delete")
+Gui.frmPrivateGL.gsAccount.BuildStyle(1,2,"Format","alignment",4)
+
+Gui.frmPrivateGL.gsAccount.ApplyStyle(0,1)
+
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("buildstyle_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3069_PrivateGLAccount.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.buildstyle.End
+
+Program.Sub.nonbrowser.Start
+F.Intrinsic.Control.SetErrorHandler("nonbrowser_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+
+V.Local.sSql.Declare(String)
+V.Local.sTitles.Declare(String)
+V.Local.sWidths.Declare(String)
+V.Local.sRet.Declare(String)
+
+
+'Restrict Access GL Account
+
+V.Local.sTitles.Set("Account*!*Account Desc*!*Department*!*Inactive Date")
+
+F.Intrinsic.String.Build("SELECT GL_ACCOUNT AS 'Account', DESCR AS 'AccountDescription', DEPT AS Department, IF (SUBSTRING (INACTIVE_DATE ,1 ,4 )>= '1900' AND SUBSTRING (INACTIVE_DATE ,1 ,4 )<= '2999' AND SUBSTRING (INACTIVE_DATE ,5 ,2 )<= '12'","","",V.Local.sSql)
+F.Intrinsic.String.Build("{0} AND SUBSTRING (INACTIVE_DATE ,5 ,2 )>= '01' AND SUBSTRING (INACTIVE_DATE ,7 ,2 )<= '31' AND SUBSTRING (INACTIVE_DATE ,7 ,2 )>= '01' , CONVERT (SUBSTRING (INACTIVE_DATE ,1 ,4 )+'-' +SUBSTRING (INACTIVE_DATE ,5 ,2 )+'-' +",V.Local.sSql,V.Local.sSql)
+F.Intrinsic.String.Build("{0} SUBSTRING(INACTIVE_DATE ,7 ,2 ),SQL_DATE), CONVERT (NULL,SQL_DATE )) AS 'InactiveDate'  FROM GL_MASTER ORDER BY Account ",V.Local.sSql,V.Local.sSql)
+
+
+V.Local.sWidths.Set("1800*!*2700*!*1800*!*1800")
+
+F.Intrinsic.String.Split(V.Local.sTitles,"*!*",V.Local.sTitles)
+F.Intrinsic.String.Split(V.Local.sWidths,"*!*",V.Local.sWidths)
+F.Intrinsic.UI.SetBrowserHotTypeAhead(True)
+
+F.Intrinsic.UI.Browser("Selection","con",V.Local.sSql,V.Local.sTitles,V.Local.sWidths,V.Local.sRet)
+F.Intrinsic.Control.If(V.Local.sRet,<>,"***CANCEL***")
+	F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+	Variable.Passed.009001.Set(V.Local.sRet(0).Trim)
+F.Intrinsic.Control.EndIf
+
+
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("nonbrowser_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3069_PrivateGLAccount.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.nonbrowser.End
+
+
